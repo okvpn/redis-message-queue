@@ -1,11 +1,11 @@
 <?php
 
-namespace Okvpn\Bundle\RedisQueueBundle\Transport\Semaphore;
+namespace Okvpn\Bundle\RedisQueueBundle\Semaphore;
 
 /**
  * @internal
  */
-final class WindowsSemaphore implements SemaphoreInterface
+final class NullSemaphore implements SemaphoreInterface
 {
     /**
      * {@inheritdoc}

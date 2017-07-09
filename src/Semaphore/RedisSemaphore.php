@@ -1,6 +1,6 @@
 <?php
 
-namespace Okvpn\Bundle\RedisQueueBundle\Transport\Semaphore;
+namespace Okvpn\Bundle\RedisQueueBundle\Semaphore;
 
 /**
  * @internal

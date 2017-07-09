@@ -2,13 +2,9 @@
 
 namespace Okvpn\Bundle\RedisQueueBundle\Consumption;
 
-use Okvpn\Bundle\RedisQueueBundle\Transport\Semaphore\RedisSemaphore;
-use Okvpn\Bundle\RedisQueueBundle\Transport\Semaphore\SemaphoreInterface;
-use Okvpn\Bundle\RedisQueueBundle\Transport\Semaphore\UnixSemaphore;
-use Okvpn\Bundle\RedisQueueBundle\Transport\Semaphore\WindowsSemaphore;
-use Snc\RedisBundle\DependencyInjection\Configuration\RedisDsn;
+use Okvpn\Bundle\RedisQueueBundle\Semaphore\SemaphoreInterface;
 
-final class LockManager
+final class LockManager implements LockManagerInterface
 {
     /** @var SemaphoreInterface */
     protected $semaphore;
@@ -19,32 +15,14 @@ final class LockManager
     /**
      * @param SemaphoreInterface $semaphore
      */
-    protected function __construct(SemaphoreInterface $semaphore)
+    public function __construct(SemaphoreInterface $semaphore)
     {
         $this->semaphore = $semaphore;
         $this->processId = uniqid('', true);
     }
 
     /**
-     * @param string $redisDsn
-     * @return LockManager
-     */
-    public static function create($redisDsn = null)
-    {
-        if (function_exists('sem_get')) {
-            $semaphore = new UnixSemaphore();
-        } elseif ($redisDsn !== null) {
-            $redis = RedisFactory::create(new RedisDsn($redisDsn));
-            $semaphore = new RedisSemaphore($redis);
-        } else {
-            $semaphore = new WindowsSemaphore();
-        }
-
-        return new self($semaphore);
-    }
-
-    /**
-     * @param string|null $key
+     * {@inheritdoc}
      */
     public function lock($key = null)
     {
@@ -56,7 +34,7 @@ final class LockManager
     }
 
     /**
-     * @param string|null $key
+     * {@inheritdoc}
      */
     public function unlock($key = null)
     {
@@ -65,6 +43,14 @@ final class LockManager
         }
 
         $this->semaphore->release($key);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getProcessId()
+    {
+        return $this->processId;
     }
 
     public function switchProcess()

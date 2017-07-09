@@ -2,6 +2,7 @@
 
 namespace Okvpn\Bundle\RedisQueueBundle\Transport\Redis\Driver;
 
+use Okvpn\Bundle\RedisQueueBundle\Consumption\LockManagerInterface;
 use Okvpn\Bundle\RedisQueueBundle\Consumption\RedisFactory;
 use Okvpn\Bundle\RedisQueueBundle\Transport\Redis\RedisSession;
 use Oro\Component\MessageQueue\Client\MessagePriority;
@@ -19,10 +20,14 @@ class RedisConnection implements ConnectionInterface
     /** @var \Redis */
     private $connection;
 
+    /** @var LockManagerInterface */
+    private $lockManager;
+
     /**
      * @param array $config
+     * @param LockManagerInterface $lockManager
      */
-    public function __construct(array $config)
+    public function __construct(array $config, LockManagerInterface $lockManager)
     {
         $this->dsn = new RedisDsn($config['dsn']);
     }
@@ -86,6 +91,32 @@ class RedisConnection implements ConnectionInterface
             MessagePriority::LOW => 1,
             MessagePriority::VERY_LOW => 0,
         ];
+    }
+
+
+    /**
+     * @param null|string $key
+     * @return bool
+     */
+    public function lock($key = null)
+    {
+        return $this->lockManager->lock($key);
+    }
+
+    /**
+     * @param null|string $key
+     */
+    public function unlock($key = null)
+    {
+        $this->lockManager->unlock($key);
+    }
+
+    /**
+     * @return string
+     */
+    public function getProcessId()
+    {
+        return $this->lockManager->getProcessId();
     }
 
     private function initialize()

@@ -2,6 +2,7 @@
 
 namespace Okvpn\Bundle\RedisQueueBundle\Transport\Redis;
 
+use Okvpn\Bundle\RedisQueueBundle\Consumption\LockManagerInterface;
 use Okvpn\Bundle\RedisQueueBundle\Transport\Redis\Driver\RedisConnection as BaseConnection;
 
 use Oro\Component\MessageQueue\Transport\ConnectionInterface;
@@ -39,11 +40,12 @@ class RedisConnection implements ConnectionInterface
 
     /**
      * @param array $config
+     * @param LockManagerInterface $lockManager
      * @return static
      */
-    public static function createConnection(array $config)
+    public static function createConnection(array $config, LockManagerInterface $lockManager)
     {
-        $redisConnection = new BaseConnection($config);
+        $redisConnection = new BaseConnection($config, $lockManager);
 
         return new static($redisConnection);
     }
