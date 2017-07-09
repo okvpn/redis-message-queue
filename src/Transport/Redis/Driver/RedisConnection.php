@@ -2,6 +2,7 @@
 
 namespace Okvpn\Bundle\RedisQueueBundle\Transport\Redis\Driver;
 
+use Okvpn\Bundle\RedisQueueBundle\Consumption\RedisFactory;
 use Okvpn\Bundle\RedisQueueBundle\Transport\Redis\RedisSession;
 use Oro\Component\MessageQueue\Client\MessagePriority;
 use Oro\Component\MessageQueue\Transport\ConnectionInterface;
@@ -24,7 +25,6 @@ class RedisConnection implements ConnectionInterface
     public function __construct(array $config)
     {
         $this->dsn = new RedisDsn($config['dsn']);
-        $this->connection = new \Redis();
     }
 
     /**
@@ -94,23 +94,7 @@ class RedisConnection implements ConnectionInterface
             return;
         }
 
-        if (null !== $this->dsn->getSocket()) {
-            $this->connection->connect($this->dsn->getSocket());
-        } else {
-            $this->connection->connect(
-                $this->dsn->getHost(),
-                $this->dsn->getPort()
-            );
-        }
-
-        if ('' !== $this->dsn->getPassword()) {
-            $this->connection->auth($this->dsn->getPassword());
-        }
-
-        if (0 !== $this->dsn->getDatabase()) {
-            $this->connection->select($this->dsn->getDatabase());
-        }
-
+        $this->connection = RedisFactory::create($this->dsn);
         $this->initialized = true;
     }
 }
