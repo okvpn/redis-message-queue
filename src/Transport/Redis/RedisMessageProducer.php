@@ -54,7 +54,8 @@ class RedisMessageProducer implements MessageProducerInterface
             $rMessage = [
                 'body' => $body,
                 'headers' => $message->getHeaders(),
-                'properties' => $message->getProperties()
+                'properties' => $message->getProperties(),
+                'process_id' => $this->connection->getProcessId(),
             ];
 
             $connection = $this->connection->getRedisConnection();

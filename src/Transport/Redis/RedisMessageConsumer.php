@@ -109,7 +109,8 @@ class RedisMessageConsumer implements MessageConsumerInterface
             $rMessage = [
                 'body' => $message->getBody(),
                 'headers' => $message->getHeaders(),
-                'properties' => $message->getProperties()
+                'properties' => $message->getProperties(),
+                'process_id' => $this->connection->getProcessId(),
             ];
 
             if ($message->getDelay() !== null) {
@@ -133,22 +134,37 @@ class RedisMessageConsumer implements MessageConsumerInterface
     protected function receiveMessage()
     {
         $message = false;
+        $lockedMessages = [];
         $connection =  $this->connection->getRedisConnection();
         $this->processDelay($connection);
 
         foreach ($this->connection->getPriorityMap() as $priority) {
             $name = $this->connection->getListName($this->queue->getQueueName(), $priority);
-            $message = $connection->rPop($name);
-            if (false !== $message) {
-                break;
+            while ($rawMessage = $connection->rPop($name)) {
+                $message = JSON::decode($rawMessage);
+                if ($this->connection->lock($message['process_id'])) {
+                    break 2;
+                } else {
+                    $lockedMessages[$name][] = $rawMessage;
+                }
             }
+        }
+
+        foreach ($lockedMessages as $name => $lockedMessage) {
+            array_map(
+                function ($rawMessage) use ($connection, $name) {
+                    $connection->lPush($name, $rawMessage);
+                },
+                $lockedMessage
+            );
         }
 
         if (false === $message) {
             return null;
         }
 
-        $message = $this->createMessageFromData(JSON::decode($message));
+        $this->connection->unlock($message['process_id']);
+        $message = $this->createMessageFromData($message);
         $expire = $message->getExpire();
 
         return ($expire !== null && $expire < time()) ? null : $message;

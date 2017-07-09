@@ -30,7 +30,7 @@ final class LockManager implements LockManagerInterface
             $key = $this->processId;
         }
 
-        $this->semaphore->acquire($key);
+        return $this->semaphore->acquire($key);
     }
 
     /**
